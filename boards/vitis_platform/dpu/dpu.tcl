@@ -43,7 +43,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 set list_projs [get_projects -quiet]
 if { $list_projs eq "" } {
-   create_project project_1 myproj -part xczu3eg-sbva484-1-i
+   create_project dpu dpu -part xczu7ev-ffvc1156-2-e
 }
 
 
@@ -1899,6 +1899,19 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
    CONFIG.CONST_VAL {0} \
  ] $xlconstant_0
 
+ # Create instance: xlslice_0, and set properties
+  set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {1} \
+   CONFIG.DIN_TO {0} \
+   CONFIG.DIN_WIDTH {95} \
+   CONFIG.DOUT_WIDTH {2} \
+ ] $xlslice_0
+
+ # Create instance: LED
+  create_bd_port -dir O -from 1 -to 0 LED
+
+
   # Create interface connections
   connect_bd_intf_net -intf_net S00_AXI_1 [get_bd_intf_pins axi_vip_0/M_AXI] [get_bd_intf_pins interconnect_axifull/S00_AXI]
   connect_bd_intf_net -intf_net S00_AXI_2 [get_bd_intf_pins interconnect_axihpm0fpd/S00_AXI] [get_bd_intf_pins ps_e_0/M_AXI_HPM0_FPD]
@@ -1925,6 +1938,8 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net xlconcat_0_dout [get_bd_pins ps_e_0/pl_ps_irq0] [get_bd_pins xlconcat_0/dout]
   connect_bd_net -net xlconcat_1_dout [get_bd_pins ps_e_0/pl_ps_irq1] [get_bd_pins xlconcat_1/dout]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconcat_0/In0] [get_bd_pins xlconstant_0/dout]
+  connect_bd_net -net xlslice_0_Dout [get_bd_ports LED] [get_bd_pins xlslice_0/Dout]
+  connect_bd_net -net ps_e_0_emio_gpio_o [get_bd_pins xlslice_0/Din] [get_bd_pins ps_e_0/emio_gpio_o]
 
   # Create address segments
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_vip_0/Master_AXI] [get_bd_addr_segs ps_e_0/SAXIGP0/HPC0_DDR_LOW] -force
@@ -1943,8 +1958,7 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   set_property PFM.AXI_PORT {  M_AXI_HPM1_FPD {memport "M_AXI_GP"}  S_AXI_HPC1_FPD {memport "S_AXI_HPC" sptag "HPC1" memory "ps_e_0 HPC1_DDR_LOW"}  S_AXI_HP0_FPD {memport "S_AXI_HP" sptag "HP0" memory "ps_e_0 HP0_DDR_LOW"}  S_AXI_HP1_FPD {memport "S_AXI_HP" sptag "HP1" memory "ps_e_0 HP1_DDR_LOW"}  S_AXI_HP2_FPD {memport "S_AXI_HP" sptag "HP2" memory "ps_e_0 HP2_DDR_LOW"}  S_AXI_HP3_FPD {memport "S_AXI_HP" sptag "HP3" memory "ps_e_0 HP3_DDR_LOW"}  } [get_bd_cells /ps_e_0]
   set_property PFM.IRQ {In1 {} In2 {} In3 {} In4 {} In5 {} In6 {} In7 {}} [get_bd_cells /xlconcat_0]
   set_property PFM.IRQ {In0 {} In1 {} In2 {} In3 {} In4 {} In5 {} In6 {} In7 {}} [get_bd_cells /xlconcat_1]
-
-
+  
   save_bd_design
 }
 # End of create_root_design()
